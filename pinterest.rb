@@ -27,14 +27,40 @@ class Pinterest < Sinatra::Base
     user.emailId = params[:emailId]
     user.password = params[:password]
 
-    #{:firstName => user.firstName }.to_json
-
     links = Link.new
     links.url = "/users/login/"
     links.method = "POST"
 
-    {:links => [{:url => links.url, :method => links.method}]}.to_json
+    # Persist to database
 
+    # Creating Response Links
+    {:links => [{:url => links.url, :method => links.method}]}.to_json
+  end
+
+  # User Log-In API
+  post '/users/login' do
+    content_type :json
+    puts "params after post params method = #{params.inspect}"
+
+    user = User.new
+    user.emailId = params[:username]
+    user.password = params[:password]
+
+    # Check in database
+
+    # Get User ID
+    user_id = "123"
+
+    # Creating Response Links
+    links1 = Link.new
+    links1.url = "/users/" +  user_id + "/boards/"
+    links1.method = "GET"
+
+    links2 = Link.new
+    links2.url = "/users/" +  user_id + "/boards/"
+    links2.method = "POST"
+
+    {:links => [{:url => links1.url, :method => links1.method}, {:url => links2.url, :method => links2.method}]}.to_json
   end
 
   after do
