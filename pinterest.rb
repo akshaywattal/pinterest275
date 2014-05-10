@@ -12,7 +12,7 @@ class Pinterest < Sinatra::Base
     if request.request_method == "POST"
       body_parameters = request.body.read
       params.merge!(JSON.parse(body_parameters))
-      end
+    end
 
   end
 
@@ -21,13 +21,20 @@ class Pinterest < Sinatra::Base
     content_type :json
     puts "params after post params method = #{params.inspect}"
 
-    #puts request.inspect
-    firstName = params[:firstName]
-    lastName = params[:lastName]
-    emailId = params[:emailId]
-    password = params[:password]
+    user = User.new
+    user.firstName = params[:firstName]
+    user.lastName = params[:lastName]
+    user.emailId = params[:emailId]
+    user.password = params[:password]
 
-    password
+    #{:firstName => user.firstName }.to_json
+
+    links = Link.new
+    links.url = "/users/login/"
+    links.method = "POST"
+
+    {:links => [{:url => links.url, :method => links.method}]}.to_json
+
   end
 
   after do
