@@ -13,6 +13,7 @@ class Pinterest < Sinatra::Base
     if request.request_method == "GET"
       logger.info "Get Request Received"
     end
+
     if request.request_method == "POST"
       body_parameters = request.body.read
       params.merge!(JSON.parse(body_parameters))
@@ -174,6 +175,51 @@ class Pinterest < Sinatra::Base
 
       halt 200, {Boards =>  existingUser.boards}.to_json
 
+  end
+
+  # Get Single Board Details
+  get '/users/:user_id/boards/:board_name' do |user_id,board_name|
+    content_type :json
+    puts "params after post params method = #{params.inspect}"
+
+    # Capture User ID and Board Name
+    user_id = user_id
+    board_name = board_name
+
+    # Get All Boards of the user
+    existingUser = Boards.get(user_id)
+    puts existingUser.to_json
+
+    # Create Board Details
+    board = Board.new
+
+    existingUser.boards.each do |allBoardName|
+      params.merge!(JSON.parse(allBoardName.to_json))
+      if params[:boardName] == board_name
+        board.boardName = params[:boardName]
+        board.boardDesc = params[:boardDesc]
+        board.category = params[:category]
+        board.isPrivate = params[:isPrivate]
+        break
+      end
+    end
+
+    # Creating Response Links
+    links1 = Link.new
+    links1.url = "/users/" +  user_id + "/boards/" + board.boardName
+    links1.method = "PUT"
+
+    links2 = Link.new
+    links2.url = "/users/" +  user_id + "/boards/" + board.boardName
+    links2.method = "DELETE"
+
+    links3 = Link.new
+    links3.url = "/users/" +  user_id + "/boards/" + board.boardName + "/pins"
+    links3.method = "POST"
+
+    # Creating Final Response
+    {:board => board,:links => [{:url => links1.url, :method => links1.method}, {:url => links2.url, :method => links2.method},
+                {:url => links3.url, :method => links3.method}]}.to_json
   end
 
   after do
