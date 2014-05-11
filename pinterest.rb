@@ -10,7 +10,9 @@ class Pinterest < Sinatra::Base
 
   before do
     logger.info "Entering Request...."
-
+    if request.request_method == "GET"
+      logger.info "Get Request Received"
+    end
     if request.request_method == "POST"
       body_parameters = request.body.read
       params.merge!(JSON.parse(body_parameters))
@@ -141,6 +143,37 @@ class Pinterest < Sinatra::Base
 
     halt 201,{:links => [{:url => links1.url, :method => links1.method}, {:url => links2.url, :method => links2.method},
                 {:url => links3.url, :method => links3.method},{:url => links4.url, :method => links4.method}]}.to_json
+  end
+
+  get '/users/:user_id/boards' do |user_id|
+     content_type :json
+     logger.info "users/:user_id/boards...."
+      puts "params after post params method = #{params.inspect}"
+
+      # Capture User ID
+      user_id = user_id
+
+      # Check if record already exists
+      existingUser = Boards.get(user_id)
+      #puts existingUser.to_json
+
+     puts existingUser.boards.to_json
+
+     # existingUser.boards.each do |allBoardName|
+     #   params.merge!(JSON.parse(allBoardName.to_json))
+     #   if params[:boardName] == board_name
+     #     board.boardName = params[:boardName]
+     #     board.boardDesc = params[:boardDesc]
+     #     board.category = params[:category]
+     #     board.isPrivate = params[:isPrivate]
+     #     break
+     #   end
+     # end
+
+
+
+      halt 200, {Boards =>  existingUser.boards}.to_json
+
   end
 
   after do
