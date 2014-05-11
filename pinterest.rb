@@ -375,7 +375,7 @@ class Pinterest < Sinatra::Base
 
       if(!existingPin)
         halt 400, {:ErrorMessage => "Invalid Pin ID"}.to_json
-      elsif
+      else
         isBoard = 1
       end
 
