@@ -146,35 +146,18 @@ class Pinterest < Sinatra::Base
                 {:url => links3.url, :method => links3.method},{:url => links4.url, :method => links4.method}]}.to_json
   end
 
+  # Get all User Boards
   get '/users/:user_id/boards' do |user_id|
-     content_type :json
-     logger.info "users/:user_id/boards...."
-      puts "params after post params method = #{params.inspect}"
+    content_type :json
+    puts "params after post params method = #{params.inspect}"
 
-      # Capture User ID
-      user_id = user_id
+    # Capture User ID
+    user_id = user_id
 
-      # Check if record already exists
-      existingUser = Boards.get(user_id)
-      #puts existingUser.to_json
+    # Check if record already exists
+    existingUser = Boards.get(user_id)
 
-     puts existingUser.boards.to_json
-
-     # existingUser.boards.each do |allBoardName|
-     #   params.merge!(JSON.parse(allBoardName.to_json))
-     #   if params[:boardName] == board_name
-     #     board.boardName = params[:boardName]
-     #     board.boardDesc = params[:boardDesc]
-     #     board.category = params[:category]
-     #     board.isPrivate = params[:isPrivate]
-     #     break
-     #   end
-     # end
-
-
-
-      halt 200, {Boards =>  existingUser.boards}.to_json
-
+    halt 200, {Boards =>  existingUser.boards}.to_json
   end
 
   # Get Single Board Details
