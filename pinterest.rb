@@ -349,6 +349,56 @@ class Pinterest < Sinatra::Base
     end
   end
 
+  # Get Details of Single Pin
+  get '/users/:user_id/boards/:board_name/pins/:pin_id' do |user_id,board_name,pin_id|
+    content_type :json
+    puts "params after post params method = #{params.inspect}"
+
+    # Board Flag
+    isBoard = 0
+
+    # Capture User ID and Board Name
+    user_id = user_id
+    board_name = board_name
+    pin_id = pin_id
+
+    # Get Boards
+    existingUser = Boards.get(user_id)
+    puts existingUser.to_json
+
+    # Check if board exists
+    if !existingUser
+      halt 400, {:ErrorMessage => "Invalid User ID"}.to_json
+    else
+      # Get Pin
+      existingPin = Pin.get(pin_id)
+
+      if(!existingPin)
+        halt 400, {:ErrorMessage => "Invalid Pin ID"}.to_json
+      elsif
+        isBoard = 1
+      end
+
+
+      if isBoard == 1
+        # Creating Response Links
+        links1 = Link.new
+        links1.url = "/users/" +  user_id + "/boards/" + board_name + "/pins/" + pin_id
+        links1.method = "PUT"
+
+        links2 = Link.new
+        links2.url = "/users/" +  user_id + "/boards/" + board_name + "/pins/" + pin_id
+        links2.method = "DELETE"
+
+        # Creating Final Response
+        halt 201, {:pin => existingPin,:links => [{:url => links1.url, :method => links1.method}, {:url => links2.url, :method => links2.method}]}.to_json
+      elsif isBoard == 0
+        halt 400, {:ErrorMessage => "Board Doesn't Exists"}.to_json
+      end
+
+    end
+  end
+
   after do
     logger.info "Leaving Request...."
   end
