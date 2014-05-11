@@ -18,12 +18,13 @@ class Pinterest < Sinatra::Base
 
   # Handle Not defined Routes
   not_found do
-    halt 400
+    content_type :json
+    halt 400, {:ErrorMessage => "Route not defined"}.to_json
   end
 
   # Error Handling - per class Standard to set Code 400
   error do
-    halt 400
+    halt 400, {:ErrorMessage => "Error in Route"}.to_json
   end
 
   # User Sign-Up API
