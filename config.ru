@@ -2,6 +2,8 @@ require './pinterest'
 require './user'
 require './link'
 require './board'
+require './boards'
+require 'set'
 require "json"
 require 'couchrest'
 require 'couchrest_model'

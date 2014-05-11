@@ -1,5 +1,6 @@
 require 'sinatra'
 require "json"
+require 'set'
 
 
 class Pinterest < Sinatra::Base
@@ -89,15 +90,24 @@ class Pinterest < Sinatra::Base
     puts "params after post params method = #{params.inspect}"
 
     # Capture User ID
-    user_id = user_id.to_i
+    user_id = user_id
 
+    # Capture Board Details
     board = Board.new
     board.boardName = params[:boardName]
     board.boardDesc = params[:boardDesc]
     board.category = params[:category]
     board.isPrivate = params[:isPrivate]
 
+    # Create Boards Array
+    boards = Boards.new
+    boards.boards = Set.new
+    boards.boards.add(board)
+    boards._id = user_id
+    puts boards.to_json
+
     # Persist to database
+    boards.save
 
     # Creating Response Links
     links1 = Link.new

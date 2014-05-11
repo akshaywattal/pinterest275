@@ -13,5 +13,6 @@ class User < CouchRest::Model::Base
   property :password, String
   property :_id, String
   property :user_id, String
+  property :boards, Set
 
 end
