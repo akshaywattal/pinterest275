@@ -5,7 +5,7 @@ require 'set'
 
 class Board < CouchRest::Model::Base
   #attr_accessor :boardName, :boardDesc, :category, :isPrivate
-  #use_database DB
+  use_database DB
   property :boardName, String
   property :boardDesc, String
   property :category, String

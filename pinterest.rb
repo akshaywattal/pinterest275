@@ -623,4 +623,89 @@ class Pinterest < Sinatra::Base
     logger.info "Leaving Request...."
   end
 
+  # Update Single Board
+  put '/users/:user_id/boards/:board_name' do |user_id,board_name|
+    content_type :json
+    puts "params after post params method = #{params.inspect}"
+
+    # Board Flag
+    isBoard = 0
+
+    # Capture User ID and Board Name
+    user_id = user_id
+    board_name = board_name
+
+    # Get Boards
+    existingUser = Boards.get(user_id)
+    puts existingUser.to_json
+
+    board = Board.new
+    if (existingUser)
+      boards = existingUser.boards
+    end
+
+    # Check if board exists
+    if !existingUser
+      halt 400, {:ErrorMessage => "Invalid User ID"}.to_json
+    else
+      existingUser.boards.each do |allBoardName|
+        if allBoardName['boardName'] == board_name
+          boards.delete(allBoardName)
+
+          board.boardName = allBoardName['boardName']
+          board.pins = allBoardName['pins']
+
+          if (params[:boardDesc] != nil)
+            board.boardDesc = params[:boardDesc]
+          elsif
+          board.boardDesc = allBoardName['boardDesc']
+          end
+
+          if (params[:category] != nil)
+            board.category = params[:category]
+          elsif
+          board.category = allBoardName['category']
+          end
+
+          if (params[:isPrivate] != nil)
+            board.isPrivate = params[:isPrivate]
+          elsif
+          board.isPrivate = allBoardName['isPrivate']
+          end
+
+          isBoard = 1
+          break
+        end
+      end
+      if isBoard == 1
+        # Set Board
+        boards.add(board)
+        existingUser.boards = Set.new
+        existingUser.boards = boards
+        existingUser.update_attributes(boards)
+
+        # Creating Response Links
+        links1 = Link.new
+        links1.url = "/users/" +  user_id + "/boards/" + board.boardName
+        links1.method = "GET"
+
+        links2 = Link.new
+        links2.url = "/users/" +  user_id + "/boards/" + board.boardName
+        links2.method = "DELETE"
+
+        links3 = Link.new
+        links3.url = "/users/" +  user_id + "/boards/" + board.boardName + "/pins"
+        links3.method = "POST"
+
+        halt 200,{:board => board,:links => [{:url => links1.url, :method => links1.method}, {:url => links2.url, :method => links2.method},
+                             {:url => links3.url, :method => links3.method}]}.to_json
+      elsif isBoard == 0
+        halt 400, {:ErrorMessage => "Board Doesn't Exist"}.to_json
+      end
+    end
+  end
+
+  after do
+    logger.info "Leaving Request...."
+  end
 end
