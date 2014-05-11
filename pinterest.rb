@@ -292,7 +292,7 @@ class Pinterest < Sinatra::Base
         halt 201, {:links => [{:url => links1.url, :method => links1.method}, {:url => links2.url, :method => links2.method},
                                     {:url => links3.url, :method => links3.method}]}.to_json
       elsif isBoard == 0
-        halt 400, {:ErrorMessage => "Board Doesn't Exists"}.to_json
+        halt 400, {:ErrorMessage => "Board Doesn't Exist"}.to_json
         end
     end
   end
@@ -344,7 +344,7 @@ class Pinterest < Sinatra::Base
         # Creating Final Response
         {:pins => pinsCollection}.to_json
       elsif isBoard == 0
-        halt 400, {:ErrorMessage => "Board Doesn't Exists"}.to_json
+        halt 400, {:ErrorMessage => "Board Doesn't Exist"}.to_json
       end
     end
   end
@@ -379,7 +379,6 @@ class Pinterest < Sinatra::Base
         isBoard = 1
       end
 
-
       if isBoard == 1
         # Creating Response Links
         links1 = Link.new
@@ -393,9 +392,8 @@ class Pinterest < Sinatra::Base
         # Creating Final Response
         halt 201, {:pin => existingPin,:links => [{:url => links1.url, :method => links1.method}, {:url => links2.url, :method => links2.method}]}.to_json
       elsif isBoard == 0
-        halt 400, {:ErrorMessage => "Board Doesn't Exists"}.to_json
-      end
-
+        halt 400, {:ErrorMessage => "Board Doesn't Exist"}.to_json
+        end
     end
   end
 
