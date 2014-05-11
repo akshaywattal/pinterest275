@@ -240,8 +240,6 @@ class Pinterest < Sinatra::Base
           # Persist Pin to Database
           pin.save
 
-          puts "After Save"
-
           # Fetch Board Values
           board.boardName = params[:boardName]
           board.boardDesc = params[:boardDesc]
@@ -296,6 +294,58 @@ class Pinterest < Sinatra::Base
       elsif isBoard == 0
         halt 400, {:ErrorMessage => "Board Doesn't Exists"}.to_json
         end
+    end
+  end
+
+  # Get List of Pin API
+  get '/users/:user_id/boards/:board_name/pins' do |user_id,board_name|
+    content_type :json
+    puts "params after post params method = #{params.inspect}"
+
+    # Board Flag
+    isBoard = 0
+
+    # Capture User ID and Board Name
+    user_id = user_id
+    board_name = board_name
+
+    # Get Boards
+    existingUser = Boards.get(user_id)
+    puts existingUser.to_json
+
+    # Create Set for Pins
+    pinsCollection = Set.new
+
+    # Check if board exists
+    if !existingUser
+      halt 400, {:ErrorMessage => "Invalid User ID"}.to_json
+    else
+      existingUser.boards.each do |allBoardName|
+        params.merge!(JSON.parse(allBoardName.to_json))
+        if params[:boardName] == board_name
+
+          # Create Iterator for Pins
+          pinIterate = params[:pins]
+          if pinIterate != nil
+            pinIterate.each do |allPin|
+              String tempStore = allPin
+              puts tempStore
+              existingPin = Pin.get(tempStore)
+              pinsCollection.add(existingPin)
+            end
+          end
+
+          isBoard = 1
+          break
+        end
+      end
+
+      if isBoard == 1
+        # Creating Final Response
+        {:pins => pinsCollection}.to_json
+      elsif isBoard == 0
+        halt 400, {:ErrorMessage => "Board Doesn't Exists"}.to_json
+      end
     end
   end
 
