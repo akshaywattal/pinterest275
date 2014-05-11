@@ -62,22 +62,26 @@ class Pinterest < Sinatra::Base
     user.emailId = params[:username]
     user.password = params[:password]
 
-    # Check in database
+    # puts User.get(params[:username])
 
-    # Get User ID
-    user_id = "123"
+    user1 = User.get(user.emailId)
 
-    # Creating Response Links
-    links1 = Link.new
-    links1.url = "/users/" +  user_id + "/boards/"
-    links1.method = "GET"
+    if user1.password = user.password
+      # Creating Response Links
+      links1 = Link.new
+      links1.url = "/users/" +  user1.user_id + "/boards/"
+      links1.method = "GET"
 
-    links2 = Link.new
-    links2.url = "/users/" +  user_id + "/boards/"
-    links2.method = "POST"
+      links2 = Link.new
+      links2.url = "/users/" +  user1.user_id + "/boards/"
+      links2.method = "POST"
 
-    {:links => [{:url => links1.url, :method => links1.method}, {:url => links2.url, :method => links2.method}]}.to_json
-  end
+      halt 201, {:links => [{:url => links1.url, :method => links1.method}, {:url => links2.url, :method => links2.method}]}.to_json
+    else
+      halt 404
+    end
+
+    end
 
   # User Board Creation API
   post '/users/:user_id/boards' do |user_id|
