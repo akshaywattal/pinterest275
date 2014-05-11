@@ -397,6 +397,9 @@ class Pinterest < Sinatra::Base
     end
   end
 
+  # 9.	Comment on pins
+    post '/users/:user_id/boards/:board_name/pins/:pin_id'
+
   after do
     logger.info "Leaving Request...."
   end
