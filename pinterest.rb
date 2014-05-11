@@ -73,11 +73,11 @@ class Pinterest < Sinatra::Base
     if user1.password = user.password
       # Creating Response Links
       links1 = Link.new
-      links1.url = "/users/" +  user1.user_id + "/boards/"
+      links1.url = "/users/" +  user1.user_id + "/boards"
       links1.method = "GET"
 
       links2 = Link.new
-      links2.url = "/users/" +  user1.user_id + "/boards/"
+      links2.url = "/users/" +  user1.user_id + "/boards"
       links2.method = "POST"
 
       halt 201, {:links => [{:url => links1.url, :method => links1.method}, {:url => links2.url, :method => links2.method}]}.to_json
@@ -203,6 +203,100 @@ class Pinterest < Sinatra::Base
     # Creating Final Response
     {:board => board,:links => [{:url => links1.url, :method => links1.method}, {:url => links2.url, :method => links2.method},
                 {:url => links3.url, :method => links3.method}]}.to_json
+  end
+
+  # Create Pin API
+  post '/users/:user_id/boards/:board_name/pins' do |user_id,board_name|
+    content_type :json
+    puts "params after post params method = #{params.inspect}"
+    # Board Flag
+    isBoard = 0
+
+    # Capture User ID and Board Name
+    user_id = user_id
+    board_name = board_name
+
+    # Create Pin
+    pin = Pin.new
+    pin.pinName = params[:pinName]
+    pin.image = params[:image]
+    pin.description = params[:description]
+    pin._id = pin.pinName.hash + pin.description.hash + rand(1000000000)
+
+    # Get Boards
+    existingUser = Boards.get(user_id)
+    puts existingUser.to_json
+
+    board = Board.new
+    boards = existingUser.boards
+
+    # Check if board exists
+    if !existingUser
+      halt 400, {:ErrorMessage => "Invalid User ID"}.to_json
+    else
+      existingUser.boards.each do |allBoardName|
+        params.merge!(JSON.parse(allBoardName.to_json))
+        if params[:boardName] == board_name
+          # Persist Pin to Database
+          pin.save
+
+          puts "After Save"
+
+          # Fetch Board Values
+          board.boardName = params[:boardName]
+          board.boardDesc = params[:boardDesc]
+          board.category = params[:category]
+          board.isPrivate = params[:isPrivate]
+
+          # Create Set for Pins
+          pinsNew = Set.new
+
+          # Create Iterator for Pins
+          pinIterate = params[:pins]
+          if pinIterate != nil
+            pinIterate.each do |allPin|
+            pinsNew.add(allPin)
+            end
+          end
+
+          # Add new Pin
+          pinsNew.add(pin._id)
+
+          board.pins = Set.new
+          board.pins = pinsNew
+          boards.delete(allBoardName)
+          isBoard = 1
+          break
+        end
+      end
+
+      if isBoard == 1
+        # Set Board
+        boards.add(board)
+        existingUser.boards = Set.new
+        existingUser.boards = boards
+        existingUser.update_attributes(boards)
+
+        # Creating Response Links
+        links1 = Link.new
+        links1.url = "/users/" +  user_id + "/boards/" + board.boardName + "/pins/" + pin._id
+        links1.method = "GET"
+
+        links2 = Link.new
+        links2.url = "/users/" +  user_id + "/boards/" + board.boardName + "/pins/" + pin._id
+        links2.method = "PUT"
+
+        links3 = Link.new
+        links3.url = "/users/" +  user_id + "/boards/" + board.boardName + "/pins/" + pin._id
+        links3.method = "DELETE"
+
+        # Creating Final Response
+        halt 201, {:links => [{:url => links1.url, :method => links1.method}, {:url => links2.url, :method => links2.method},
+                                    {:url => links3.url, :method => links3.method}]}.to_json
+      elsif isBoard == 0
+        halt 400, {:ErrorMessage => "Board Doesn't Exists"}.to_json
+        end
+    end
   end
 
   after do

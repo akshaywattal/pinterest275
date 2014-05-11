@@ -1,5 +1,6 @@
 require 'sinatra'
 require 'couchrest_model'
+require 'set'
 
 
 class Board < CouchRest::Model::Base
@@ -9,4 +10,5 @@ class Board < CouchRest::Model::Base
   property :boardDesc, String
   property :category, String
   property :isPrivate, String, :default => "false"
+  property :pins, Set
 end
