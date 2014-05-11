@@ -95,24 +95,48 @@ class Pinterest < Sinatra::Base
     board.category = params[:category]
     board.isPrivate = params[:isPrivate]
 
-    # Create Boards Array
-    boards = Boards.new
-    boards.boards = Set.new
-    boards.boards.add(board)
-    boards._id = user_id
-    puts boards.to_json
+    # Check if record already exists
+    existingUser = Boards.get(user_id)
+    puts existingUser.to_json
 
     # Persist to database
-    boards.save
+    if !existingUser
+      # Create Boards Array for new user
+      boards = Boards.new
+      boards.boards = Set.new
+      boards._id = user_id
+      boards.boards.add(board)
+      puts boards.to_json
+      boards.save
+    else
+      # Create Boards Array for existing user
+      logger.info "Updated User..."
+      boards = existingUser.boards
+      boards.add(board)
+      existingUser.boards = Set.new
+      existingUser.boards = boards
+      existingUser.update_attributes(boards)
+    end
 
     # Creating Response Links
     links1 = Link.new
-    links1.url = "/users/" +  user_id + "/boards/"
+    links1.url = "/users/" +  user_id + "/boards/" + board.boardName
     links1.method = "GET"
 
     links2 = Link.new
-    links2.url = "/users/" +  user_id + "/boards/"
-    links2.method = "POST"
+    links2.url = "/users/" +  user_id + "/boards/" + board.boardName
+    links2.method = "PUT"
+
+    links3 = Link.new
+    links3.url = "/users/" +  user_id + "/boards/" + board.boardName
+    links3.method = "DELETE"
+
+    links4 = Link.new
+    links4.url = "/users/" +  user_id + "/boards/" + board.boardName + "/pins"
+    links4.method = "POST"
+
+    halt 201,{:links => [{:url => links1.url, :method => links1.method}, {:url => links2.url, :method => links2.method},
+                {:url => links3.url, :method => links3.method},{:url => links4.url, :method => links4.method}]}.to_json
   end
 
   after do

@@ -2,10 +2,7 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="2ee43b52-7e1f-41c0-ab65-3155e4eeb1fc" name="Default" comment="">
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/board.rb" afterPath="$PROJECT_DIR$/board.rb" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/config.ru" afterPath="$PROJECT_DIR$/config.ru" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/pinterest.rb" afterPath="$PROJECT_DIR$/pinterest.rb" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/user.rb" afterPath="$PROJECT_DIR$/user.rb" />
     </list>
     <ignored path="pinterest275.iws" />
     <ignored path=".idea/workspace.xml" />
@@ -35,8 +32,8 @@
       <file leaf-file-name="pinterest.rb" pinned="false" current="true" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/pinterest.rb">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.04761905" vertical-offset="1330" max-vertical-offset="1905">
-              <caret line="90" column="26" selection-start-line="90" selection-start-column="26" selection-end-line="90" selection-end-column="26" />
+            <state vertical-scroll-proportion="0.6785714" vertical-offset="1845" max-vertical-offset="2265">
+              <caret line="142" column="23" selection-start-line="142" selection-start-column="23" selection-end-line="142" selection-end-column="23" />
               <folding />
             </state>
           </provider>
@@ -475,8 +472,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/pinterest.rb">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.04761905" vertical-offset="1330" max-vertical-offset="1905">
-          <caret line="90" column="26" selection-start-line="90" selection-start-column="26" selection-end-line="90" selection-end-column="26" />
+        <state vertical-scroll-proportion="0.6785714" vertical-offset="1845" max-vertical-offset="2265">
+          <caret line="142" column="23" selection-start-line="142" selection-start-column="23" selection-end-line="142" selection-end-column="23" />
           <folding />
         </state>
       </provider>
