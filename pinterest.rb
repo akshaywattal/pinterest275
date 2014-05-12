@@ -55,7 +55,7 @@ class Pinterest < Sinatra::Base
 
     # Capture Link Details
     links = Link.new
-    links.url = "/users/login/"
+    links.url = "/users/login"
     links.method = "POST"
 
     # Creating Response Links
