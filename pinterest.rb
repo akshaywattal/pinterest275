@@ -619,10 +619,6 @@ class Pinterest < Sinatra::Base
     end
   end
 
-  after do
-    logger.info "Leaving Request...."
-  end
-
   # Update Single Board
   put '/users/:user_id/boards/:board_name' do |user_id,board_name|
     content_type :json
@@ -703,6 +699,141 @@ class Pinterest < Sinatra::Base
         halt 400, {:ErrorMessage => "Board Doesn't Exist"}.to_json
       end
     end
+  end
+
+  # Create Comment on Pin API
+  post '/users/:user_id/boards/:board_name/pins/:pin_id/comment' do |user_id,board_name,pin_id|
+    content_type :json
+    puts "params after post params method = #{params.inspect}"
+
+    # Board Flag
+    isBoard = 0
+
+    # Capture User ID and Board Name
+    user_id = user_id
+    board_name = board_name
+    pin_id = pin_id
+
+    # Get Boards
+    existingUser = Boards.get(user_id)
+    puts existingUser.to_json
+
+    # Check if board exists
+    if !existingUser
+      halt 400, {:ErrorMessage => "Invalid User ID"}.to_json
+    else
+      # Get Pin
+      existingPin = Pin.get(pin_id)
+
+      if(!existingPin)
+        halt 400, {:ErrorMessage => "Invalid Pin ID"}.to_json
+      else
+        # Create Comment
+        comment = Comment.new
+        comment.text = params[:text]
+        comment._id = user_id.hash + comment.text.hash + rand(1000000000)
+        comment.user_id = user_id
+
+        # Get Previous Comments
+        comments = existingPin.comments
+        if (comments == nil)
+          comments = Set.new
+        end
+        comments.add(comment)
+
+        existingPin.comments = Set.new
+        existingPin.comments = comments
+        existingPin.update_attributes(comments)
+        isBoard = 1
+      end
+
+      if isBoard == 1
+        # Creating Response Links
+        links1 = Link.new
+        links1.url = "/users/" +  user_id + "/boards/" + board_name + "/pins/" + pin_id + "/comment/" + comment._id
+        links1.method = "GET"
+
+        links2 = Link.new
+        links2.url = "/users/" +  user_id + "/boards/" + board_name + "/pins/" + pin_id + "/comment/" + comment._id
+        links2.method = "DELETE"
+
+        # Creating Final Response
+        halt 200, {:pin => existingPin,:links => [{:url => links1.url, :method => links1.method}, {:url => links2.url, :method => links2.method}]}.to_json
+      elsif isBoard == 0
+        halt 400, {:ErrorMessage => "Board Doesn't Exist"}.to_json
+      end
+    end
+  end
+
+  # Delete Comment on Pin API
+  delete '/users/:user_id/boards/:board_name/pins/:pin_id/comment/:comment_id' do |user_id,board_name,pin_id,comment_id|
+    content_type :json
+    puts "params after post params method = #{params.inspect}"
+
+    # Board Flag
+    isBoard = 0
+
+    # Capture User ID and Board Name
+    user_id = user_id
+    board_name = board_name
+    pin_id = pin_id
+    comment_id = comment_id
+
+    # Get Boards
+    existingUser = Boards.get(user_id)
+    puts existingUser.to_json
+
+    # Check if board exists
+    if !existingUser
+      halt 400, {:ErrorMessage => "Invalid User ID"}.to_json
+    else
+      # Get Pin
+      existingPin = Pin.get(pin_id)
+
+      if(!existingPin)
+        halt 400, {:ErrorMessage => "Invalid Pin ID"}.to_json
+      else
+        comments = existingPin.comments
+        existingPin.comments.each do |allComments|
+          if allComments['user_id'] == user_id && allComments['_id'] == comment_id
+            comments.delete(allComments)
+            puts comments.to_json
+            isBoard = 1
+            break
+          end
+        end
+
+      if isBoard == 1
+        # Update Pin Comments Set
+        existingPin.comments = Set.new
+        existingPin.comments = comments
+        existingPin.update_attributes(comments)
+
+        # Creating Response Links
+        links1 = Link.new
+        links1.url = "/users/" +  user_id + "/boards/" + board_name + "/pins/" + pin_id
+        links1.method = "GET"
+
+        links2 = Link.new
+        links2.url = "/users/" +  user_id + "/boards/" + board_name + "/pins/" + pin_id
+        links2.method = "PUT"
+
+        links3 = Link.new
+        links3.url = "/users/" +  user_id + "/boards/" + board_name + "/pins/" + pin_id
+        links3.method = "POST"
+
+        links4 = Link.new
+        links4.url = "/users/" +  user_id + "/boards/" + board_name + "/pins/" + pin_id + "/comment/"
+        links4.method = "POST"
+
+        # Creating Final Response
+        halt 201, {:pin => existingPin,:links => [{:url => links1.url, :method => links1.method}, {:url => links2.url, :method => links2.method},
+                                                  {:url => links3.url, :method => links3.method},{:url => links4.url, :method => links4.method}]}.to_json
+      elsif isBoard == 0
+        halt 400, {:ErrorMessage => "Board Doesn't Exist"}.to_json
+        end
+        end
+      end
   end
 
   after do
