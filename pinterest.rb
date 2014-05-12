@@ -3,6 +3,7 @@ require "json"
 require 'set'
 require 'httparty'
 require 'rest-client'
+require "sinatra/cookies"
 
 
 
@@ -11,23 +12,79 @@ class Pinterest < Sinatra::Base
   disable :show_exceptions
   #helpers Sinatra::JSON
 
-
+  auth = false
   before do
     logger.info "Entering Request...."
-    if request.request_method == "GET"
-      logger.info "Get Request Received"
+   if request.cookies['pint_cookie']
+     response = HTTParty.get('http://127.0.0.1:5984/pint/'+request.cookies['pint_cookie'] )
+     parsed_response = JSON.parse(response)
+     auth = parsed_response['value']
+    end
+    # helpers do
+    #   def admin?
+    #
+    #   end
+    # end
+    file = File.read('./server.json')
+    config = JSON.parse(file)
+    node = config["neighbours"]['1']
+
+
+
+    def get_node
+      file = File.read('./server.json')
+      config = JSON.parse(file)
+      node = config["neighbours"]['1']
+      return node
     end
 
-    if request.request_method == "POST"
-      body_parameters = request.body.read
-      params.merge!(JSON.parse(body_parameters))
-    end
 
-    if request.request_method == "PUT"
-      body_parameters = request.body.read
-      params.merge!(JSON.parse(body_parameters))
+
+    if config["master"] == 'false'
+      puts " Bach gaya bc, tu kar le!"
+      puts node
+      puts request
+      url = 'http://'+node+request.fullpath
+      puts url
+      redirect url,307
+      # redirect node,307
+
+    else
+      puts "Mereko gaand\\ marwaake karna hi hoga..."
+
+      if request.request_method == "GET"
+        logger.info "Get Request Received"
+      end
+
+      if request.request_method == "POST"
+        body_parameters = request.body.read
+        params.merge!(JSON.parse(body_parameters))
+      end
+
+      if request.request_method == "PUT"
+        body_parameters = request.body.read
+        params.merge!(JSON.parse(body_parameters))
+      end
+
+
     end
   end
+  # before do
+  #   logger.info "Entering Request...."
+  #   if request.request_method == "GET"
+  #     logger.info "Get Request Received"
+  #   end
+  #
+  #   if request.request_method == "POST"
+  #     body_parameters = request.body.read
+  #     params.merge!(JSON.parse(body_parameters))
+  #   end
+  #
+  #   if request.request_method == "PUT"
+  #     body_parameters = request.body.read
+  #     params.merge!(JSON.parse(body_parameters))
+  #   end
+  # end
 
   # Handle Not defined Routes
   not_found do
@@ -38,6 +95,10 @@ class Pinterest < Sinatra::Base
   # Error Handling - per class Standard to set Code 400
   error do
     halt 400, {:ErrorMessage => "Error in Route"}.to_json
+  end
+
+  get '/hi' do
+    "Hello World"
   end
 
   # User Sign-Up API
@@ -74,13 +135,19 @@ class Pinterest < Sinatra::Base
     user = User.new
     user.emailId = params[:username]
     user.password = params[:password]
+    hash = user.emailId.hash + user.password.hash
 
     # puts User.get(params[:username])
 
     user1 = User.get(user.emailId)
-
+    HTTParty.post('http://127.0.0.1:5984/pint',:body => {:_id => hash.to_s, :value => 'true'}.to_json,
+                  :headers => { 'Content-Type' => 'application/json' } )
     if user1.password = user.password
       # Creating Response Links
+      response.set_cookie("pint_cookie", :value => hash.to_s ,
+                          :domain => false,
+                          :path => '/'
+                          )
       links1 = Link.new
       links1.url = "/users/" +  user1.user_id + "/boards"
       links1.method = "GET"
@@ -99,6 +166,9 @@ class Pinterest < Sinatra::Base
   # User Board Creation API
   post '/users/:user_id/boards' do |user_id|
     content_type :json
+
+    halt(401,'Not Authorized') unless auth
+
     puts "params after post params method = #{params.inspect}"
 
     # Capture User ID
@@ -158,6 +228,8 @@ class Pinterest < Sinatra::Base
   # Get all User Boards
   get '/users/:user_id/boards' do |user_id|
     content_type :json
+    puts auth
+    halt(401,'Not Authorized') unless auth
     puts "params after post params method = #{params.inspect}"
 
     # Capture User ID
@@ -172,6 +244,7 @@ class Pinterest < Sinatra::Base
   # Get Single Board Details
   get '/users/:user_id/boards/:board_name' do |user_id,board_name|
     content_type :json
+    halt(401,'Not Authorized') unless auth
     puts "params after post params method = #{params.inspect}"
 
     # Capture User ID and Board Name
@@ -217,10 +290,15 @@ class Pinterest < Sinatra::Base
   # Create Pin API
   post '/users/:user_id/boards/:board_name/pins' do |user_id,board_name|
     content_type :json
+    halt(401,'Not Authorized') unless auth
     puts "params after post params method = #{request.inspect}"
     puts params
     # Board Flag
     isBoard = 0
+    node = get_node
+    puts node
+    # url = URI.parse('http://'+ node + '/users/' + user_id + '/boards/' + board_name + '/pins')
+
      # uri = URI.parse("http//127.0.0.1:5984/pint")
      # response = Net::HTTP.post_form("http//127.0.0.1:5984/pint/", 307)
     puts params
@@ -329,6 +407,7 @@ class Pinterest < Sinatra::Base
   # Get List of Pin API
   get '/users/:user_id/boards/:board_name/pins' do |user_id,board_name|
     content_type :json
+    halt(401,'Not Authorized') unless auth
     puts "params after post params method = #{params.inspect}"
 
     # Board Flag
@@ -381,6 +460,7 @@ class Pinterest < Sinatra::Base
   # Get Details of Single Pin
   get '/users/:user_id/boards/:board_name/pins/:pin_id' do |user_id,board_name,pin_id|
     content_type :json
+    halt(401,'Not Authorized') unless auth
     puts "params after post params method = #{params.inspect}"
 
     # Board Flag
@@ -429,6 +509,7 @@ class Pinterest < Sinatra::Base
   # Delete a Pin
   delete '/users/:user_id/boards/:board_name/pins/:pin_id' do |user_id,board_name,pin_id|
     content_type :json
+    halt(401,'Not Authorized') unless auth
     puts "params after post params method = #{params.inspect}"
 
     # Board Flag
@@ -525,6 +606,7 @@ class Pinterest < Sinatra::Base
   # Update a Single Pin
   put '/users/:user_id/boards/:board_name/pins/:pin_id' do |user_id,board_name,pin_id|
     content_type :json
+    halt(401,'Not Authorized') unless auth
     puts "params after post params method = #{params.inspect}"
 
     # Board Flag
@@ -591,6 +673,7 @@ class Pinterest < Sinatra::Base
   # Delete Single Board
   delete '/users/:user_id/boards/:board_name' do |user_id,board_name|
     content_type :json
+    halt(401,'Not Authorized') unless auth
     puts "params after post params method = #{params.inspect}"
 
     # Board Flag
@@ -646,6 +729,7 @@ class Pinterest < Sinatra::Base
   # Update Single Board
   put '/users/:user_id/boards/:board_name' do |user_id,board_name|
     content_type :json
+    halt(401,'Not Authorized') unless auth
     puts "params after post params method = #{params.inspect}"
 
     # Board Flag
@@ -728,6 +812,7 @@ class Pinterest < Sinatra::Base
   # Create Comment on Pin API
   post '/users/:user_id/boards/:board_name/pins/:pin_id/comment' do |user_id,board_name,pin_id|
     content_type :json
+    halt(401,'Not Authorized') unless auth
     puts "params after post params method = #{params.inspect}"
 
     # Board Flag
@@ -792,6 +877,7 @@ class Pinterest < Sinatra::Base
   # Delete Comment on Pin API
   delete '/users/:user_id/boards/:board_name/pins/:pin_id/comment/:comment_id' do |user_id,board_name,pin_id,comment_id|
     content_type :json
+    halt(401,'Not Authorized') unless auth
     puts "params after post params method = #{params.inspect}"
 
     # Board Flag
@@ -863,6 +949,7 @@ class Pinterest < Sinatra::Base
   # Get All Comment on Pin
   get '/users/:user_id/boards/:board_name/pins/:pin_id/comment' do |user_id,board_name,pin_id|
     content_type :json
+    halt(401,'Not Authorized') unless auth
     puts "params after post params method = #{params.inspect}"
 
     # Board Flag

@@ -1,0 +1,8 @@
+{
+    "master" : "true",
+    "neighbours" :
+    {
+        "1" : "localhost:4567",
+        "2" : "localhost:9292"
+    }
+}
