@@ -10,7 +10,9 @@ class Pin < CouchRest::Model::Base
   property :_id, String
   property :pinName, String
   property :image, String
+  #property :_attachments, String
   property :attachments, String
   property :description, String
+  property :comments, Set
 
 end
