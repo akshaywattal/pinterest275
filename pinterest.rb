@@ -1,6 +1,8 @@
 require 'sinatra'
 require "json"
 require 'set'
+require 'httparty'
+require 'rest-client'
 
 
 
@@ -8,6 +10,7 @@ class Pinterest < Sinatra::Base
   enable :logging
   disable :show_exceptions
   #helpers Sinatra::JSON
+
 
   before do
     logger.info "Entering Request...."
@@ -220,7 +223,11 @@ class Pinterest < Sinatra::Base
     isBoard = 0
      # uri = URI.parse("http//127.0.0.1:5984/pint")
      # response = Net::HTTP.post_form("http//127.0.0.1:5984/pint/", 307)
-
+    puts params
+    response = HTTParty.post("http://127.0.0.1:5984/pint", :body => params.to_json,
+                             :headers => { 'Content-Type' => 'application/json' } )
+    #@name ="Sexy"
+    #response = RestClient.post 'http://127.0.0.1:5984/pint', :data => params.to_json, :accept => :json
 
     puts '****************************'
     puts response
@@ -312,7 +319,7 @@ class Pinterest < Sinatra::Base
         halt 201, {:links => [{:url => links1.url, :method => links1.method}, {:url => links2.url, :method => links2.method},
                                     {:url => links3.url, :method => links3.method}]}.to_json
 
-        response = redirect 'http://127.0.0.1:5984/pint', 307
+
       elsif isBoard == 0
         halt 400, {:ErrorMessage => "Board Doesn't Exist"}.to_json
         end
