@@ -6,11 +6,9 @@ require 'rest-client'
 require "sinatra/cookies"
 
 
-
 class Pinterest < Sinatra::Base
   enable :logging
   disable :show_exceptions
-  #helpers Sinatra::JSON
 
   auth = false
   before do
@@ -295,36 +293,20 @@ class Pinterest < Sinatra::Base
     puts params
     # Board Flag
     isBoard = 0
-    node = get_node
-    puts node
-    # url = URI.parse('http://'+ node + '/users/' + user_id + '/boards/' + board_name + '/pins')
 
-     # uri = URI.parse("http//127.0.0.1:5984/pint")
-     # response = Net::HTTP.post_form("http//127.0.0.1:5984/pint/", 307)
-    puts params
-    response = HTTParty.post("http://127.0.0.1:5984/pint", :body => params.to_json,
+    # Request to Add PIN to CouchDB using HTTParty
+    response = HTTParty.post("http://127.0.0.1:5984/pint", :body => { :pinName => params[:pinName],
+                                                                      :image => params[:pinName],
+                                                                      :description => params[:description],
+                                                                      :_attachments => params[:_attachments]}.to_json,
                              :headers => { 'Content-Type' => 'application/json' } )
-    #@name ="Sexy"
-    #response = RestClient.post 'http://127.0.0.1:5984/pint', :data => params.to_json, :accept => :json
 
-    puts '****************************'
-    puts response
-    # RestClient.get uri, :_id => "1234"
+    # Parsing Response
+    responseParse = JSON.parse(response)
+
     # Capture User ID and Board Name
     user_id = user_id
     board_name = board_name
-
-    # Create Pin
-    pin = Pin.new
-    pin.pinName = params[:pinName]
-    pin.image = params[:image]
-    pin.description = params[:description]
-    # pin._attachments = '1234'
-    pin.attachments = params[:attachments]
-    puts '**************************'
-    puts pin.attachments
-    puts '**************************'
-    pin._id = pin.pinName.hash + pin.description.hash + rand(1000000000)
 
     # Get Boards
     existingUser = Boards.get(user_id)
@@ -340,10 +322,7 @@ class Pinterest < Sinatra::Base
       existingUser.boards.each do |allBoardName|
         params.merge!(JSON.parse(allBoardName.to_json))
         if params[:boardName] == board_name
-          # Persist Pin to Database
-          puts " start pin persisting"
-          pin.save
-          puts "pin persisted"
+
           # Fetch Board Values
           board.boardName = params[:boardName]
           board.boardDesc = params[:boardDesc]
@@ -362,7 +341,7 @@ class Pinterest < Sinatra::Base
           end
 
           # Add new Pin
-          pinsNew.add(pin._id)
+          pinsNew.add(responseParse['id'])
 
           board.pins = Set.new
           board.pins = pinsNew
@@ -381,22 +360,20 @@ class Pinterest < Sinatra::Base
 
         # Creating Response Links
         links1 = Link.new
-        links1.url = "/users/" +  user_id + "/boards/" + board.boardName + "/pins/" + pin._id
+        links1.url = "/users/" +  user_id + "/boards/" + board.boardName + "/pins/" + responseParse['id']
         links1.method = "GET"
 
         links2 = Link.new
-        links2.url = "/users/" +  user_id + "/boards/" + board.boardName + "/pins/" + pin._id
+        links2.url = "/users/" +  user_id + "/boards/" + board.boardName + "/pins/" + responseParse['id']
         links2.method = "PUT"
 
         links3 = Link.new
-        links3.url = "/users/" +  user_id + "/boards/" + board.boardName + "/pins/" + pin._id
+        links3.url = "/users/" +  user_id + "/boards/" + board.boardName + "/pins/" + responseParse['id']
         links3.method = "DELETE"
 
-        response = redirect 'http://127.0.0.1:5984/pint', 307
         # Creating Final Response
         halt 201, {:links => [{:url => links1.url, :method => links1.method}, {:url => links2.url, :method => links2.method},
                                     {:url => links3.url, :method => links3.method}]}.to_json
-
 
       elsif isBoard == 0
         halt 400, {:ErrorMessage => "Board Doesn't Exist"}.to_json
@@ -439,6 +416,8 @@ class Pinterest < Sinatra::Base
               String tempStore = allPin
               puts tempStore
               existingPin = Pin.get(tempStore)
+              imageUrl = "http://127.0.0.1:5984/pint/" + existingPin._id + "/img.png"
+              existingPin.attachments = imageUrl
               pinsCollection.add(existingPin)
             end
           end
@@ -482,6 +461,10 @@ class Pinterest < Sinatra::Base
       # Get Pin
       existingPin = Pin.get(pin_id)
 
+      # Create Image URL for Response
+      imageUrl = "http://127.0.0.1:5984/pint/" + pin_id + "/img.png"
+      existingPin.attachments = imageUrl
+
       if(!existingPin)
         halt 400, {:ErrorMessage => "Invalid Pin ID"}.to_json
       else
@@ -499,7 +482,7 @@ class Pinterest < Sinatra::Base
         links2.method = "DELETE"
 
         # Creating Final Response
-        halt 201, {:pin => existingPin,:links => [{:url => links1.url, :method => links1.method}, {:url => links2.url, :method => links2.method}]}.to_json
+        halt 200, {:pin => existingPin,:links => [{:url => links1.url, :method => links1.method}, {:url => links2.url, :method => links2.method}]}.to_json
       elsif isBoard == 0
         halt 400, {:ErrorMessage => "Board Doesn't Exist"}.to_json
         end
@@ -631,25 +614,35 @@ class Pinterest < Sinatra::Base
       if(!existingPin)
         halt 400, {:ErrorMessage => "Invalid Pin ID"}.to_json
       else
-        # Create Pin
-        pin = Pin.new
+        existingUser.boards.each do |allBoardName|
+          #params.merge!(JSON.parse(allBoardName.to_json))
+          if allBoardName['boardName'] == board_name
+            # Create Pin
+            pin = Pin.new
 
-        if (params[:pinName] != nil)
-          pin.pinName = params[:pinName]
-        elsif
-          pin.pinName = existingPin.pinName
+            if (params[:pinName] != nil)
+              pin.pinName = params[:pinName]
+            elsif
+            pin.pinName = existingPin.pinName
+            end
+
+            if (params[:description] != nil)
+              pin.description = params[:description]
+            elsif
+            pin.description = existingPin.description
+            end
+
+            pin.image = existingPin.image
+            pin._id = pin_id
+
+            # Create Image URL for Response
+            imageUrl = "http://127.0.0.1:5984/pint/" + pin_id + "/img.png"
+            pin.attachments = imageUrl
+
+            existingPin.update_attributes(pin)
+            isBoard = 1
+            end
         end
-
-        if (params[:description] != nil)
-          pin.description = params[:description]
-        elsif
-          pin.description = existingPin.description
-        end
-
-        pin.image = existingPin.image
-        pin._id = pin_id
-        existingPin.update_attributes(pin)
-        isBoard = 1
       end
 
       if isBoard == 1
@@ -839,8 +832,8 @@ class Pinterest < Sinatra::Base
       else
         # Create Comment
         comment = Comment.new
-        comment.text = params[:text]
-        comment._id = user_id.hash + comment.text.hash + rand(1000000000)
+        comment.description = params[:description]
+        comment._id = user_id.hash + comment.description.hash + rand(1000000000)
         comment.user_id = user_id
 
         # Get Previous Comments
@@ -859,7 +852,7 @@ class Pinterest < Sinatra::Base
       if isBoard == 1
         # Creating Response Links
         links1 = Link.new
-        links1.url = "/users/" +  user_id + "/boards/" + board_name + "/pins/" + pin_id + "/comment/" + comment._id
+        links1.url = "/users/" +  user_id + "/boards/" + board_name + "/pins/" + pin_id + "/comment/"
         links1.method = "GET"
 
         links2 = Link.new
