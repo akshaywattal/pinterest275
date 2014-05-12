@@ -827,13 +827,52 @@ class Pinterest < Sinatra::Base
         links4.method = "POST"
 
         # Creating Final Response
-        halt 201, {:pin => existingPin,:links => [{:url => links1.url, :method => links1.method}, {:url => links2.url, :method => links2.method},
+        halt 200, {:pin => existingPin,:links => [{:url => links1.url, :method => links1.method}, {:url => links2.url, :method => links2.method},
                                                   {:url => links3.url, :method => links3.method},{:url => links4.url, :method => links4.method}]}.to_json
       elsif isBoard == 0
         halt 400, {:ErrorMessage => "Board Doesn't Exist"}.to_json
         end
-        end
       end
+    end
+  end
+
+  # Get All Comment on Pin
+  get '/users/:user_id/boards/:board_name/pins/:pin_id/comment' do |user_id,board_name,pin_id|
+    content_type :json
+    puts "params after post params method = #{params.inspect}"
+
+    # Board Flag
+    isBoard = 0
+
+    # Capture User ID, Board Name & Pin ID
+    user_id = user_id
+    board_name = board_name
+    pin_id = pin_id
+
+    # Get Boards
+    existingUser = Boards.get(user_id)
+    puts existingUser.to_json
+
+    # Check if board exists
+    if !existingUser
+      halt 400, {:ErrorMessage => "Invalid User ID"}.to_json
+    else
+      # Get Pin
+      existingPin = Pin.get(pin_id)
+
+      if(!existingPin)
+        halt 400, {:ErrorMessage => "Invalid Pin ID"}.to_json
+      else
+        isBoard = 1
+      end
+
+        if isBoard == 1
+          # Creating Final Response
+          halt 200, {:comments => existingPin.comments}.to_json
+        elsif isBoard == 0
+          halt 400, {:ErrorMessage => "Board Doesn't Exist"}.to_json
+        end
+    end
   end
 
   after do
