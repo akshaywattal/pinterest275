@@ -2,7 +2,11 @@ require 'sinatra'
 require 'couchrest_model'
 require 'set'
 
-SERVER = CouchRest.new
+file = File.read('./server.json')
+config = JSON.parse(file)
+node = config["database"]
+
+SERVER = CouchRest.new(node)
 DB     = SERVER.database!('pint')
 
 class Pin < CouchRest::Model::Base

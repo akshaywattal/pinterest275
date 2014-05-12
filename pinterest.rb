@@ -6,15 +6,20 @@ require 'rest-client'
 require "sinatra/cookies"
 
 
+
 class Pinterest < Sinatra::Base
   enable :logging
   disable :show_exceptions
+
+  file = File.read('./server.json')
+  config = JSON.parse(file)
+  dataHost = config["database"]
 
   auth = false
   before do
     logger.info "Entering Request...."
    if request.cookies['pint_cookie']
-     response = HTTParty.get('http://127.0.0.1:5984/pint/'+request.cookies['pint_cookie'] )
+     response = HTTParty.get('http://' + dataHost + '/pint/'+ request.cookies['pint_cookie'] )
      parsed_response = JSON.parse(response)
      auth = parsed_response['value']
     end
@@ -38,7 +43,7 @@ class Pinterest < Sinatra::Base
 
 
 
-    if config["master"] == 'false'
+    if config["master"] == 'true'
       puts " Bach gaya bc, tu kar le!"
       puts node
       puts request
@@ -136,14 +141,14 @@ class Pinterest < Sinatra::Base
     hash = user.emailId.hash + user.password.hash
 
     # puts User.get(params[:username])
-
+    puts dataHost
     user1 = User.get(user.emailId)
-    HTTParty.post('http://127.0.0.1:5984/pint',:body => {:_id => hash.to_s, :value => 'true'}.to_json,
+    HTTParty.post('http://' + dataHost + '/pint',:body => {:_id => hash.to_s, :value => 'true'}.to_json,
                   :headers => { 'Content-Type' => 'application/json' } )
     if user1.password = user.password
       # Creating Response Links
       response.set_cookie("pint_cookie", :value => hash.to_s ,
-                          :domain => false,
+                          :domain => "192.168.0.123",
                           :path => '/'
                           )
       links1 = Link.new
@@ -295,7 +300,7 @@ class Pinterest < Sinatra::Base
     isBoard = 0
 
     # Request to Add PIN to CouchDB using HTTParty
-    response = HTTParty.post("http://127.0.0.1:5984/pint", :body => { :pinName => params[:pinName],
+    response = HTTParty.post('http://' + dataHost + '/pint/', :body => { :pinName => params[:pinName],
                                                                       :image => params[:pinName],
                                                                       :description => params[:description],
                                                                       :_attachments => params[:_attachments]}.to_json,
@@ -416,7 +421,7 @@ class Pinterest < Sinatra::Base
               String tempStore = allPin
               puts tempStore
               existingPin = Pin.get(tempStore)
-              imageUrl = "http://127.0.0.1:5984/pint/" + existingPin._id + "/img.png"
+              imageUrl = 'http://' + dataHost + '/pint/' + existingPin._id + "/img.png"
               existingPin.attachments = imageUrl
               pinsCollection.add(existingPin)
             end
@@ -462,7 +467,7 @@ class Pinterest < Sinatra::Base
       existingPin = Pin.get(pin_id)
 
       # Create Image URL for Response
-      imageUrl = "http://127.0.0.1:5984/pint/" + pin_id + "/img.png"
+      imageUrl = 'http://' + dataHost + '/pint/' + pin_id + "/img.png"
       existingPin.attachments = imageUrl
 
       if(!existingPin)
@@ -636,7 +641,7 @@ class Pinterest < Sinatra::Base
             pin._id = pin_id
 
             # Create Image URL for Response
-            imageUrl = "http://127.0.0.1:5984/pint/" + pin_id + "/img.png"
+            imageUrl = 'http://' + dataHost + '/pint/' + pin_id + "/img.png"
             pin.attachments = imageUrl
 
             existingPin.update_attributes(pin)
