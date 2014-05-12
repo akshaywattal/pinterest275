@@ -1,4 +1,4 @@
-#!/bin/env ruby
+  #!/bin/env ruby
 
 require 'sinatra'
 require 'json'

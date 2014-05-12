@@ -1,6 +1,10 @@
 require 'sinatra'
 require "json"
 require 'set'
+require 'net/http'
+require 'uri'
+require 'rest_client'
+
 
 
 class Pinterest < Sinatra::Base
@@ -208,10 +212,17 @@ class Pinterest < Sinatra::Base
   # Create Pin API
   post '/users/:user_id/boards/:board_name/pins' do |user_id,board_name|
     content_type :json
-    puts "params after post params method = #{params.inspect}"
+    puts "params after post params method = #{request.inspect}"
+    puts params
     # Board Flag
     isBoard = 0
+     # uri = URI.parse("http//127.0.0.1:5984/pint")
+     # response = Net::HTTP.post_form("http//127.0.0.1:5984/pint/", 307)
 
+
+    puts '****************************'
+    puts response
+    # RestClient.get uri, :_id => "1234"
     # Capture User ID and Board Name
     user_id = user_id
     board_name = board_name
@@ -221,6 +232,11 @@ class Pinterest < Sinatra::Base
     pin.pinName = params[:pinName]
     pin.image = params[:image]
     pin.description = params[:description]
+    # pin._attachments = '1234'
+    pin.attachments = params[:attachments]
+    puts '**************************'
+    puts pin.attachments
+    puts '**************************'
     pin._id = pin.pinName.hash + pin.description.hash + rand(1000000000)
 
     # Get Boards
@@ -238,8 +254,9 @@ class Pinterest < Sinatra::Base
         params.merge!(JSON.parse(allBoardName.to_json))
         if params[:boardName] == board_name
           # Persist Pin to Database
+          puts " start pin persisting"
           pin.save
-
+          puts "pin persisted"
           # Fetch Board Values
           board.boardName = params[:boardName]
           board.boardDesc = params[:boardDesc]
@@ -288,9 +305,12 @@ class Pinterest < Sinatra::Base
         links3.url = "/users/" +  user_id + "/boards/" + board.boardName + "/pins/" + pin._id
         links3.method = "DELETE"
 
+        response = redirect 'http://127.0.0.1:5984/pint', 307
         # Creating Final Response
         halt 201, {:links => [{:url => links1.url, :method => links1.method}, {:url => links2.url, :method => links2.method},
                                     {:url => links3.url, :method => links3.method}]}.to_json
+
+        response = redirect 'http://127.0.0.1:5984/pint', 307
       elsif isBoard == 0
         halt 400, {:ErrorMessage => "Board Doesn't Exist"}.to_json
         end
@@ -376,7 +396,7 @@ class Pinterest < Sinatra::Base
       if(!existingPin)
         halt 400, {:ErrorMessage => "Invalid Pin ID"}.to_json
       else
-      elsif
+
         isBoard = 1
       end
 
