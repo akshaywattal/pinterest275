@@ -11,11 +11,14 @@ class Pinterest < Sinatra::Base
   enable :logging
   disable :show_exceptions
 
+  # Read db configurations from server.json
   file = File.read('./server.json')
   config = JSON.parse(file)
   dataHost = config["database"]
 
+  # Variable for authentication to APIs
   auth = false
+
   before do
     logger.info "Entering Request...."
    if request.cookies['pint_cookie']
@@ -23,28 +26,26 @@ class Pinterest < Sinatra::Base
      parsed_response = JSON.parse(response)
      auth = parsed_response['value']
     end
-    # helpers do
-    #   def admin?
-    #
-    #   end
-    # end
+
+    # Read master/slave configurations for redirecting from server.json
+
     file = File.read('./server.json')
     config = JSON.parse(file)
-    node = config["neighbours"]['1']
+    node = config["neighbours"]['2']
 
 
 
-    def get_node
-      file = File.read('./server.json')
-      config = JSON.parse(file)
-      node = config["neighbours"]['1']
-      return node
-    end
+    # def get_node
+    #   file = File.read('./server.json')
+    #   config = JSON.parse(file)
+    #   node = config["neighbours"]['1']
+    #   return node
+    # end
 
 
 
     if config["master"] == 'true'
-      puts " Bach gaya bc, tu kar le!"
+      puts " Forwarding to slave.........."
       puts node
       puts request
       url = 'http://'+node+request.fullpath
@@ -53,7 +54,7 @@ class Pinterest < Sinatra::Base
       # redirect node,307
 
     else
-      puts "Mereko gaand\\ marwaake karna hi hoga..."
+      puts "Processing Requests..........."
 
       if request.request_method == "GET"
         logger.info "Get Request Received"
@@ -72,22 +73,7 @@ class Pinterest < Sinatra::Base
 
     end
   end
-  # before do
-  #   logger.info "Entering Request...."
-  #   if request.request_method == "GET"
-  #     logger.info "Get Request Received"
-  #   end
-  #
-  #   if request.request_method == "POST"
-  #     body_parameters = request.body.read
-  #     params.merge!(JSON.parse(body_parameters))
-  #   end
-  #
-  #   if request.request_method == "PUT"
-  #     body_parameters = request.body.read
-  #     params.merge!(JSON.parse(body_parameters))
-  #   end
-  # end
+
 
   # Handle Not defined Routes
   not_found do
@@ -100,6 +86,7 @@ class Pinterest < Sinatra::Base
     halt 400, {:ErrorMessage => "Error in Route"}.to_json
   end
 
+  # Test Route not related to project
   get '/hi' do
     "Hello World"
   end
@@ -140,17 +127,18 @@ class Pinterest < Sinatra::Base
     user.password = params[:password]
     hash = user.emailId.hash + user.password.hash
 
-    # puts User.get(params[:username])
-    puts dataHost
+    # Creating the cookie and posting to db
     user1 = User.get(user.emailId)
     HTTParty.post('http://' + dataHost + '/pint',:body => {:_id => hash.to_s, :value => 'true'}.to_json,
                   :headers => { 'Content-Type' => 'application/json' } )
     if user1.password = user.password
-      # Creating Response Links
+
+
       response.set_cookie("pint_cookie", :value => hash.to_s ,
                           :domain => "192.168.0.123",
                           :path => '/'
                           )
+      # Creating Response Links
       links1 = Link.new
       links1.url = "/users/" +  user1.user_id + "/boards"
       links1.method = "GET"
